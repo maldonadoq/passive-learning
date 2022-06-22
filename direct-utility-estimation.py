@@ -244,7 +244,6 @@ policy3 = np.array([
 
 # all policies
 policies = [policy1, policy2, policy3]
-
 for i in range(len(policies)):
     printPolicy(policies[i])
 

@@ -1,9 +1,6 @@
-# from email import policy
-from cmath import nan
+from email import policy
 import numpy as np
 import random
-
-np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}".format(x)})
 
 
 # Gets the perpendicular actions of the given action
@@ -33,32 +30,6 @@ class Agent:
         self.P = np.zeros((height, width))
         self.P[:] = -100  # -100 value for missing null policy
         self.U = np.zeros((height, width))
-
-    # Returns the actions available at a given state
-    # def actionsAt(self, i, j):
-    #     actions = [UP, DOWN, LEFT, RIGHT]
-
-    #     # Check borders
-    #     if i == self.height - 1:
-    #         actions.remove(DOWN)
-    #     if i == 0:
-    #         actions.remove(UP)
-    #     if j == self.width - 1:
-    #         actions.remove(RIGHT)
-    #     if j == 0:
-    #         actions.remove(LEFT)
-
-    #     # Check walls
-    #     # for wallPos in walls:
-    #     #     if i == wallPos[0] and j == wallPos[1] - 1:
-    #     #         actions.remove(RIGHT)
-    #     #     if i == wallPos[0] and j == wallPos[1] + 1:
-    #     #         actions.remove(LEFT)
-    #     #     if i == wallPos[0] -1 and j == wallPos[1]:
-    #     #         actions.remove(DOWN)
-    #     #     if i == wallPos[0] + 1 and j == wallPos[1]:
-    #     #         actions.remove(UP)
-    #     return actions
 
     def validActions(self, i, j):
         actions = [UP, DOWN, LEFT, RIGHT]
@@ -239,24 +210,25 @@ class Agent:
         print(equals_nan)
         return equals_nan and equals_vals
 
-
     # The main function for temporal difference
     # Assumes you already have the policy P
-    def temporalDifference(self, sn, iterations):
+
+    def temporalDifference(self, policy, sn, iterations):
         self.nonenum = np.nan
         self.U = np.zeros((self.height, self.width))
         self.U[:] = self.nonenum
         self.Ns = np.zeros((self.height, self.width))
         self.alpha = 0.1
+        self.P = policy
 
         self.s = None
         self.a = None
         self.r = None
 
         for i in range(iterations):
-            sn = self.passiveTDAggent(sn)
+            sn = self.passiveTDAgent(sn)
 
-    def passiveTDAggent(self, sn):
+    def passiveTDAgent(self, sn):
         s = self.s
         rn = self.R[sn]
 
@@ -312,50 +284,32 @@ R[1, 3] = -1
 
 dest = [2, 3]
 
-ag = Agent(3, 4, walls, dest, R)
+agent = Agent(3, 4, walls, dest, R)
 
 
-for i in range(100):
-    ag.valueIteration()
-    # print(ag.U)
+for i in range(250):
+    agent.valueIteration()
 
+# optimal policy
+policy1 = np.copy(agent.P)
 
-print('Reward')
-print(ag.R)
-print('Policy optima')
-ag.printPolicy()
+# random policy
+policy2 = np.array([
+    [1, 2, 2, 1],
+    [1, -100, 2, 1],
+    [3, 3, 3, 1],
+])
 
-# for i in range(100):
-#     R, U, P = update(R, U, P, 3, 4, walls, dest)
+# random policy
+policy3 = np.array([
+    [3, 3, 1, 1],
+    [1, -100, 1, 1],
+    [3, 2, 3, 1],
+])
 
-# print(U)
-
-
-# printPolicy(P)
-
-
-# ----------------------- Code to compare different origins---------------------------
-# origin = [0, 0]
-# # # origin = [1, 0]
-# # origin = [0, 1]
-
-# all_R = []
-# for i in range(1000):
-#     T_R = ag.emulate(origin)
-#     all_R.append(T_R)
-
-# # # Here we get the average total reward
-# avg = np.mean(np.array(all_R))
-
-# print("Average ", avg)
-
-
-#  Politica aleatoria
-# for i in range(ag.height):
-#     for j in range(ag.width):
-#         ag.P[i, j] = random.randint(0, 3)
-
-ag.printPolicy()
-ag.temporalDifference((0, 0), 1000)
-
-print(ag.U.astype(np.float32))
+# all policies
+policies = [policy1, policy2, policy3]
+for i in range(len(policies)):
+    agent.temporalDifference(policies[i], (0, 0), 1000)
+    agent.printPolicy()
+    print(agent.U, '\n')
