@@ -1,14 +1,6 @@
 import numpy as np
 import random
 
-
-# Gets the perpendicular actions of the given action
-def getPerpActions(action):
-    if action == UP or action == DOWN:
-        return [LEFT, RIGHT]
-    return [UP, DOWN]
-
-
 # Actions
 UP, DOWN, LEFT, RIGHT = range(4)
 
@@ -19,6 +11,31 @@ P_R = 0.1
 GAMMA = 0.9
 
 
+# Gets the perpendicular actions of the given action
+def getPerpActions(action):
+    if action == UP or action == DOWN:
+        return [LEFT, RIGHT]
+    return [UP, DOWN]
+
+
+def printPolicy(policy):
+    for i in range(policy.shape[0]):
+        for j in range(policy.shape[1]):
+            character = ''
+            if policy[i, j] == UP:
+                character = 'U'
+            elif policy[i, j] == DOWN:
+                character = 'D'
+            elif policy[i, j] == LEFT:
+                character = 'L'
+            elif policy[i, j] == RIGHT:
+                character = 'R'
+            else:
+                character = '*'
+            print(character, end=" ")
+        print()
+
+
 class Agent:
     def __init__(self, height, width, walls, dest, R):
         self.height = height
@@ -27,7 +44,7 @@ class Agent:
         self.dest = dest
         self.R = R
         self.P = np.zeros((height, width))
-        self.P[:] = -100  # -100 value for missing null policy
+        self.P[:] = -100
         self.U = np.zeros((height, width))
 
     def validActions(self, i, j):
@@ -88,13 +105,13 @@ class Agent:
             for i in range(self.height):
                 for j in range(self.width):
                     a = self.U[i, j]
-                    self.update_state(i, j)
+                    self.updateState(i, j)
 
                     delta = max(delta, abs(a - self.U[i, j]))
             if delta <= epsilon * (1 - GAMMA) / GAMMA:
                 break
 
-    def update_state(self, i, j):
+    def updateState(self, i, j):
         #  Get the valid actions at the current state
         validActions = self.validActions(i, j)
 
@@ -141,23 +158,6 @@ class Agent:
         # Here the complete bellman equation
         self.U[i, j] = self.R[i, j] + GAMMA * bestE
 
-    def printPolicy(self):
-        for i in range(self.height):
-            for j in range(self.width):
-                character = ''
-                if self.P[i, j] == UP:
-                    character = 'U'
-                elif self.P[i, j] == DOWN:
-                    character = 'D'
-                elif self.P[i, j] == LEFT:
-                    character = 'L'
-                elif self.P[i, j] == RIGHT:
-                    character = 'R'
-                else:
-                    character = '*'
-                print(character, end=" ")
-            print()
-
     def randomAction(self, action):
         prob = random.uniform(0, 1)
         perpActions = getPerpActions(action)
@@ -173,7 +173,7 @@ class Agent:
         reward_history = []
 
         # calculate the path along which it travels according to the policy
-        
+
         current_state = origin
         while True:
             i, j = current_state
@@ -209,28 +209,46 @@ class Agent:
                 self.U[i, j] = (self.U[i, j] + U[state]) / 2
 
 
+# walls
 W = [(1, 1)]
 
+# rewards
 R = np.zeros((3, 4))
 R[:] = -0.04
 R[2, 3] = 1
 R[1, 3] = -1
 
+# destins
 D = [(2, 3), (1, 3)]
 
-policy = np.array([
-    [1, 3, 1, 1],
-    [1, -100, 1, 1],
-    [3, 3, 3, 1]
+# get optimal policy
+agent1 = Agent(3, 4, W, D, R)
+agent1.valueIteration()
+
+# optimal policy
+policy1 = agent1.P
+
+# random policy
+policy2 = np.array([
+    [1, 2, 2, 1],
+    [1, -100, 2, 1],
+    [3, 3, 3, 1],
 ])
 
-agent1 = Agent(3, 4, W, D, R)
-agent2 = Agent(3, 4, W, D, R)
+# random policy
+policy3 = np.array([
+    [3, 3, 1, 1],
+    [1, -100, 1, 1],
+    [3, 2, 3, 1],
+])
 
-""" agent1.valueIteration()
-print(agent1.U)
-print() """
+# all policies
+policies = [policy1, policy2, policy3]
 
-for i in range(1000):
-    agent2.passiveDUEAgent(policy)
-print(agent2.U)
+for i in range(len(policies)):
+    printPolicy(policies[i])
+
+    agent2 = Agent(3, 4, W, D, R)
+    for _ in range(250):
+        agent2.passiveDUEAgent(policies[i])
+    print(agent2.U, '\n')
